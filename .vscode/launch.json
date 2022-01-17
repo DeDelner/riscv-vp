@@ -1,0 +1,26 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "node",
+            "name": "Add Path",
+            "request": "launch",
+            "preLaunchTask": "addPath"
+        },
+        {
+            "type": "node",
+            "name": "Build RISCV-VP",
+            "request": "launch",
+            "preLaunchTask": "build"
+        },
+        {
+            "type": "node",
+            "name": "Run Unreal Simulation",
+            "request": "launch",
+            "preLaunchTask": "rununrealsimulation"
+        },
+      ]
+}
