@@ -1,8 +1,8 @@
-all : main.cpp bootstrap.S
-	riscv32-unknown-elf-gcc main.cpp bootstrap.S -o main -march=rv32i -mabi=ilp32 -nostartfiles -Wl,--no-relax
+all : main.cpp
+	riscv32-unknown-elf-g++ -std=c++14 main.cpp -o main -march=rv32i -mabi=ilp32
 	
 sim: all
-	riscv-vp --intercept-syscalls main
+	riscv-vp --intercept-syscalls clk
 	
 dump-elf: all
 	riscv32-unknown-elf-readelf -a main
