@@ -15,7 +15,7 @@ using namespace std;
 
 int main() {
 
-	//unrealData->Level = 'g';
+	unrealData->Level = 'g';
 
 	//printf("Test");
 
