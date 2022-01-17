@@ -4,6 +4,7 @@
 #include "basic_timer.h"
 #include "core/common/clint.h"
 #include "display.hpp"
+#include "unreal.hpp"
 #include "dma.h"
 #include "elf_loader.h"
 #include "ethernet.h"
@@ -68,6 +69,8 @@ public:
 	addr_t flash_end_addr = flash_start_addr + Flashcontroller::ADDR_SPACE;  // Usually 528 Byte
 	addr_t display_start_addr = 0x72000000;
 	addr_t display_end_addr = display_start_addr + Display::addressRange;
+	addr_t unreal_start_addr = 0x73000000;
+	addr_t unreal_end_addr = unreal_start_addr + 1500;
 
 	bool use_E_base_isa = false;
 
@@ -120,7 +123,7 @@ int sc_main(int argc, char **argv) {
 	SimpleMemory mem("SimpleMemory", opt.mem_size);
 	SimpleTerminal term("SimpleTerminal");
 	ELFLoader loader(opt.input_program.c_str());
-	SimpleBus<3, 12> bus("SimpleBus");
+	SimpleBus<3, 13> bus("SimpleBus");
 	CombinedMemoryInterface iss_mem_if("MemoryInterface", core);
 	SyscallHandler sys("SyscallHandler");
 	FE310_PLIC<1, 64, 96, 32> plic("PLIC");
@@ -133,6 +136,7 @@ int sc_main(int argc, char **argv) {
 	Flashcontroller flashController("Flashcontroller", opt.flash_device);
 	EthernetDevice ethernet("EthernetDevice", 7, mem.data, opt.network_device);
 	Display display("Display");
+	Unreal unreal("Unreal");
 	DebugMemoryInterface dbg_if("DebugMemoryInterface");
 
 	MemoryDMI dmi = MemoryDMI::create_start_size_mapping(mem.data, opt.mem_start_addr, mem.size);
@@ -180,6 +184,7 @@ int sc_main(int argc, char **argv) {
 	bus.ports[9] = new PortMapping(opt.ethernet_start_addr, opt.ethernet_end_addr);
 	bus.ports[10] = new PortMapping(opt.display_start_addr, opt.display_end_addr);
 	bus.ports[11] = new PortMapping(opt.sys_start_addr, opt.sys_end_addr);
+	bus.ports[12] = new PortMapping(opt.unreal_start_addr, opt.unreal_end_addr);
 
 	// connect TLM sockets
 	iss_mem_if.isock.bind(bus.tsocks[0]);
@@ -202,6 +207,7 @@ int sc_main(int argc, char **argv) {
 	bus.isocks[9].bind(ethernet.tsock);
 	bus.isocks[10].bind(display.tsock);
 	bus.isocks[11].bind(sys.tsock);
+	bus.isocks[12].bind(unreal.tsock);
 
 	// connect interrupt signals/communication
 	plic.target_harts[0] = &core;
