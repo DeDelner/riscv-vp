@@ -1,8 +1,11 @@
 struct UnrealData {
-    char Level;
-    char Component;
-    char Property;
-    char Value;
+/*     enum class Command : uint8_t {
+		NONE = 0,
+		CALL,
+		PROPERTY
+	} volatile command; */
+
+    char objectPath;
 
     UnrealData() {
 
@@ -15,7 +18,7 @@ using namespace std;
 
 int main() {
 
-	unrealData->Level = 'g';
+	unrealData->objectPath = 'g';
 
 	//printf("Test");
 
