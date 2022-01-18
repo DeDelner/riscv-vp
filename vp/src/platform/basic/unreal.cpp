@@ -1,27 +1,33 @@
 #include "unreal.hpp"
 
-#include <cstring>
+#include <iostream>
 #include <string>
+#include <cstring>
 #include <curl/curl.h>
 #include <nlohmann/json.hpp>
 
-//template <typename T> 
 struct UnrealData {
-/*     enum class Command : uint8_t {
-		NONE = 0,
-		CALL,
-		PROPERTY
-	} volatile command; */
 
-    char objectPath;
+    static const int len = 100;
+
+    char component[len];
+    char function_name[len];
 
     UnrealData() {
 
     };
 };
 
+std::string component_name = "";
+std::string function_name = "";
+
 Unreal::Unreal(sc_module_name) {
 	tsock.register_b_transport(this, &Unreal::transport);
+}
+
+void clear_data() {
+    component_name = "";
+    function_name = "";
 }
 
 void Unreal::transport(tlm::tlm_generic_payload &trans, sc_core::sc_time &delay) {
@@ -30,9 +36,43 @@ void Unreal::transport(tlm::tlm_generic_payload &trans, sc_core::sc_time &delay)
 	auto *ptr = trans.get_data_ptr();
 	auto len = trans.get_data_length();
 
-    UnrealData *unrealData = reinterpret_cast<UnrealData *>(ptr);
+        if (addr >= 0 && addr < 100) {
+            component_name += *ptr;
+        }
+        if (addr >= 100 && addr < 200) {
+            function_name += *ptr;
+        }
 
-    std::cout << "objectPath: " << unrealData->objectPath << std::endl;
+        std::cout << component_name << std::endl;
+        std::cout << function_name << std::endl;
+
+    
+    
+/*     if (addr < 1000) {
+        // Transmitting...
+            component_name += unreal_data->component;
+        if (addr >= 100 && addr < 200) { // null terminator
+            function_name += unreal_data->component;
+        }
+        std::cout << "component_name: " << component_name << std::endl;
+        std::cout << "function_name: " << function_name << std::endl;
+        std::cout << "addr: " << addr << std::endl;
+    } else {
+        // Done transmitting
+        nlohmann::json json = 
+        {
+            {"objectPath", "/Game/FirstPersonBP/Maps/FirstPersonExampleMap.FirstPersonExampleMap:PersistentLevel." + component_name},
+            {"functionName", function_name},
+            {"parameters", {
+                {"NewIntensity", 10.0}
+            }},
+            {"generateTransaction", true}
+        };
+
+        std::cout << json.dump(4) << std::endl;
+        clear_data();
+    } */
+    
 }
 
 void curl() {
