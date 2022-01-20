@@ -7,6 +7,6 @@ namespace Unreal {
 
     void send_unreal_data(string value);
 
-    void execute(string component_name, string function_name, map<string, string> parameters);
+    void execute(string component_name, string function_name, const map<string, string>& parameters);
 
 }

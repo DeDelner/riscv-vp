@@ -31,99 +31,22 @@ Unreal::Unreal(sc_module_name) {
 	tsock.register_b_transport(this, &Unreal::transport);
 }
 
-void Unreal::transport(tlm::tlm_generic_payload &trans, sc_core::sc_time &delay) {
-    tlm::tlm_command cmd = trans.get_command();
-	unsigned addr = trans.get_address();
-	auto *ptr = trans.get_data_ptr();
-	auto len = trans.get_data_length();
+void clear_data() {
+    component_name = "";
+    function_name = "";
+    parameter_name = "";
+    parameter_value = "";
 
-    if (*ptr == '\n') {
-        if (parameter) {
-            parameters[parameter_name] = parameter_value;
-            parameter = false;
-        } else {
-            member_count++;
-        }
-    } else if (*ptr == '\0') {
-        nlohmann::json json = 
-        {
-            {"objectPath", "/Game/FirstPersonBP/Maps/FirstPersonExampleMap.FirstPersonExampleMap:PersistentLevel." + component_name},
-            {"functionName", function_name},
-            {"parameters", {}},
-            {"generateTransaction", true}
-        };
+    parameters.clear();
 
-        for (const auto& [key, value] : parameters) {
-            //std::cout << key << " = " << value << "; ";
-            json["parameters"] = { { key, value } };
-        }
-
-        std::cout << json.dump(4) << std::endl;
-    } else {
-        switch (member_count) {
-            case 0:
-                component_name += *ptr;
-                break;
-            case 1:
-                function_name += *ptr;
-                break;
-            default:
-                if (*ptr == ':') {
-                    parameter = true;
-                } else {
-                    if (!parameter) {
-                        parameter_name += *ptr;
-                    } else {
-                        parameter_value += *ptr;
-                    }
-                }
-                break;
-        }
-    }
-
-    
-    
-/*     if (addr < 1000) {
-        // Transmitting...
-            component_name += unreal_data->component;
-        if (addr >= 100 && addr < 200) { // null terminator
-            function_name += unreal_data->component;
-        }
-        std::cout << "component_name: " << component_name << std::endl;
-        std::cout << "function_name: " << function_name << std::endl;
-        std::cout << "addr: " << addr << std::endl;
-    } else {
-        // Done transmitting
-        nlohmann::json json = 
-        {
-            {"objectPath", "/Game/FirstPersonBP/Maps/FirstPersonExampleMap.FirstPersonExampleMap:PersistentLevel." + component_name},
-            {"functionName", function_name},
-            {"parameters", {
-                {"NewIntensity", 10.0}
-            }},
-            {"generateTransaction", true}
-        };
-
-        std::cout << json.dump(4) << std::endl;
-        clear_data();
-    } */
-    
+    member_count = 0;
+    parameter = false;
 }
 
-void curl() {
+void curl(nlohmann::json json) {
     CURL *curl;
     CURLcode res;
     long http_code;
-
-    nlohmann::json json = 
-    {
-        {"objectPath", "/Game/FirstPersonBP/Maps/FirstPersonExampleMap.FirstPersonExampleMap:PersistentLevel.PointLight_1.LightComponent0"},
-        {"functionName", "SetIntensity"},
-        {"parameters", {
-            {"NewIntensity", 10.0}
-        }},
-        {"generateTransaction", true}
-    };
 
     curl = curl_easy_init();
     curl_global_init(CURL_GLOBAL_ALL);
@@ -157,4 +80,60 @@ void curl() {
         curl_easy_cleanup(curl);
         curl_global_cleanup();
     }
+}
+
+void Unreal::transport(tlm::tlm_generic_payload &trans, sc_core::sc_time &delay) {
+    tlm::tlm_command cmd = trans.get_command();
+	unsigned addr = trans.get_address();
+	auto *ptr = trans.get_data_ptr();
+	auto len = trans.get_data_length();
+
+    if (*ptr == '\n') {
+        if (parameter) {
+            parameters[parameter_name] = parameter_value;
+            parameter = false;
+        } else {
+            member_count++;
+        }
+    } else if (*ptr == '\0') {
+        nlohmann::json json = 
+        {
+            {"objectPath", "/Game/FirstPersonBP/Maps/FirstPersonExampleMap.FirstPersonExampleMap:PersistentLevel." + component_name},
+            {"functionName", function_name},
+            {"parameters", {}},
+            {"generateTransaction", true}
+        };
+
+        for (const auto& [key, value] : parameters) {
+            //std::cout << key << " = " << value << "; ";
+            json["parameters"] = { { key, std::stoi(value) } };
+        }
+
+        curl(json);
+
+        std::cout << json.dump(4) << std::endl;
+
+        clear_data();
+    } else {
+        switch (member_count) {
+            case 0:
+                component_name += *ptr;
+                break;
+            case 1:
+                function_name += *ptr;
+                break;
+            default:
+                if (*ptr == ':') {
+                    parameter = true;
+                } else {
+                    if (!parameter) {
+                        parameter_name += *ptr;
+                    } else {
+                        parameter_value += *ptr;
+                    }
+                }
+                break;
+        }
+    }
+    
 }
