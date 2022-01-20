@@ -5,7 +5,9 @@ using namespace std;
 
 int main() {
 
-    Unreal::execute("PointLight", "SetIntensity");
+    map<string, string> parameters { {"NewIntensity", "10.0"} };
+
+    Unreal::execute("PointLight", "SetIntensity", parameters);
 
 	return 0;
 }

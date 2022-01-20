@@ -1,12 +1,12 @@
 #include <string>
+#include <map>
 
 using namespace std;
 
 namespace Unreal {
 
-    template<typename T>
-    void set_unreal_data(T parameter, string value);
+    void send_unreal_data(string value);
 
-    void execute(string component_name, string function_name);
+    void execute(string component_name, string function_name, map<string, string> parameters);
 
 }

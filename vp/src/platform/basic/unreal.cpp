@@ -19,14 +19,16 @@ struct UnrealData {
 
 std::string component_name = "";
 std::string function_name = "";
+std::string parameter_name = "";
+std::string parameter_value = "";
+
+std::map<std::string, std::string> parameters;
+
+int member_count = 0;
+bool parameter = false;
 
 Unreal::Unreal(sc_module_name) {
 	tsock.register_b_transport(this, &Unreal::transport);
-}
-
-void clear_data() {
-    component_name = "";
-    function_name = "";
 }
 
 void Unreal::transport(tlm::tlm_generic_payload &trans, sc_core::sc_time &delay) {
@@ -35,25 +37,48 @@ void Unreal::transport(tlm::tlm_generic_payload &trans, sc_core::sc_time &delay)
 	auto *ptr = trans.get_data_ptr();
 	auto len = trans.get_data_length();
 
-    if (addr >= 0 && addr < 100) {
-        if (*ptr != '\0') component_name += *ptr;
-    }
-    if (addr >= 100 && addr < 200) {
-        if (*ptr != '\0') function_name += *ptr;
-    }
-
-    if (addr == 199) {
+    if (*ptr == '\n') {
+        if (parameter) {
+            parameters[parameter_name] = parameter_value;
+            parameter = false;
+        } else {
+            member_count++;
+        }
+    } else if (*ptr == '\0') {
         nlohmann::json json = 
         {
             {"objectPath", "/Game/FirstPersonBP/Maps/FirstPersonExampleMap.FirstPersonExampleMap:PersistentLevel." + component_name},
             {"functionName", function_name},
-            {"parameters", {
-                {"NewIntensity", 10.0}
-            }},
+            {"parameters", {}},
             {"generateTransaction", true}
         };
 
+        for (const auto& [key, value] : parameters) {
+            //std::cout << key << " = " << value << "; ";
+            json["parameters"] = { { key, value } };
+        }
+
         std::cout << json.dump(4) << std::endl;
+    } else {
+        switch (member_count) {
+            case 0:
+                component_name += *ptr;
+                break;
+            case 1:
+                function_name += *ptr;
+                break;
+            default:
+                if (*ptr == ':') {
+                    parameter = true;
+                } else {
+                    if (!parameter) {
+                        parameter_name += *ptr;
+                    } else {
+                        parameter_value += *ptr;
+                    }
+                }
+                break;
+        }
     }
 
     
