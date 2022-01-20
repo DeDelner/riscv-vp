@@ -7,7 +7,6 @@
 #include <nlohmann/json.hpp>
 
 struct UnrealData {
-
     static const int len = 100;
 
     char component[len];
@@ -36,15 +35,26 @@ void Unreal::transport(tlm::tlm_generic_payload &trans, sc_core::sc_time &delay)
 	auto *ptr = trans.get_data_ptr();
 	auto len = trans.get_data_length();
 
-        if (addr >= 0 && addr < 100) {
-            component_name += *ptr;
-        }
-        if (addr >= 100 && addr < 200) {
-            function_name += *ptr;
-        }
+    if (addr >= 0 && addr < 100) {
+        if (*ptr != '\0') component_name += *ptr;
+    }
+    if (addr >= 100 && addr < 200) {
+        if (*ptr != '\0') function_name += *ptr;
+    }
 
-        std::cout << component_name << std::endl;
-        std::cout << function_name << std::endl;
+    if (addr == 199) {
+        nlohmann::json json = 
+        {
+            {"objectPath", "/Game/FirstPersonBP/Maps/FirstPersonExampleMap.FirstPersonExampleMap:PersistentLevel." + component_name},
+            {"functionName", function_name},
+            {"parameters", {
+                {"NewIntensity", 10.0}
+            }},
+            {"generateTransaction", true}
+        };
+
+        std::cout << json.dump(4) << std::endl;
+    }
 
     
     
