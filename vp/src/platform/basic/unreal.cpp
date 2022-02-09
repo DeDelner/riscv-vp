@@ -5,6 +5,9 @@
 #include <cstring>
 #include <curl/curl.h>
 #include <nlohmann/json.hpp>
+#include "../../../../env/unreal/unreal_settings.h"
+
+using json = nlohmann::json;
 
 struct UnrealData {
     static const int len = 100;
@@ -43,7 +46,7 @@ void clear_data() {
     parameter = false;
 }
 
-void curl(nlohmann::json json) {
+void curl(json body) {
     CURL *curl;
     CURLcode res;
     long http_code;
@@ -60,7 +63,7 @@ void curl(nlohmann::json json) {
         curl_easy_setopt(curl, CURLOPT_URL, "host.docker.internal:30010/remote/object/call");
         curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "PUT");
         curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
-        curl_easy_setopt(curl, CURLOPT_POSTFIELDS, json.dump().c_str());
+        curl_easy_setopt(curl, CURLOPT_POSTFIELDS, body.dump().c_str());
 
 
         //enable to spit out information for debugging
@@ -96,22 +99,27 @@ void Unreal::transport(tlm::tlm_generic_payload &trans, sc_core::sc_time &delay)
             member_count++;
         }
     } else if (*ptr == '\0') {
-        nlohmann::json json = 
+
+        json body = 
         {
-            {"objectPath", "/Game/FirstPersonBP/Maps/FirstPersonExampleMap.FirstPersonExampleMap:PersistentLevel." + component_name},
+            {"objectPath", game_path + "." + component_name},
             {"functionName", function_name},
             {"parameters", {}},
             {"generateTransaction", true}
         };
 
         for (const auto& [key, value] : parameters) {
-            //std::cout << key << " = " << value << "; ";
-            json["parameters"] = { { key, std::stoi(value) } };
+            try {
+                // If float...
+                body["parameters"] = { { key, std::stof(value) } };
+            } catch(const std::exception& e) {
+                // Anything else...
+                body["parameters"] = { { key, value } };
+            }
+            
         }
 
-        curl(json);
-
-        std::cout << json.dump(4) << std::endl;
+        curl(body);
 
         clear_data();
     } else {

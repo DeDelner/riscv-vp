@@ -11,27 +11,23 @@ void activeWait(float factor = 0.5) {
 int main() {
 
     Unreal::execute(
-        "PointLight1.LightComponent0", 
-        "SetIntensity", 
+        "VP_API_2", 
+        "Set Intensity", 
         {{"NewIntensity", "0.0"}}
     );
 
-    Unreal::execute(
-        "PointLight2.LightComponent0", 
-        "SetIntensity", 
-        {{"NewIntensity", "0.0"}}
-    );
 
     int i = 0;
     while (i < 50) {
         i++;
         Unreal::execute(
-            "PointLight2.LightComponent0", 
-            "SetIntensity", 
-            {{"NewIntensity", std::to_string(i)}}
+            "VP_API_2", 
+            "Say Text", 
+            {{"NewParam", "i = " + std::to_string(i)}}
         );
         activeWait(0.005);
     }
+    
 
 	return 0;
 }
