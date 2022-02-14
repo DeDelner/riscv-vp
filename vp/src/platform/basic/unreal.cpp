@@ -6,44 +6,24 @@
 #include <curl/curl.h>
 #include <nlohmann/json.hpp>
 #include "../../../../env/unreal/unreal_settings.h"
+#include "../../../../env/unreal/unreal_components.hpp"
 
 using json = nlohmann::json;
 
-struct UnrealData {
-    static const int len = 100;
-
-    char component[len];
-    char function_name[len];
-
-    UnrealData() {
-
-    };
-};
-
-std::string component_name = "";
-std::string function_name = "";
-std::string parameter_name = "";
-std::string parameter_value = "";
-
-std::map<std::string, std::string> parameters;
-
-int member_count = 0;
-bool parameter = false;
+enum PHASE { COMPONENT, FUNCTION, PARAM_NAME, PARAM_VALUE, EXECUTE };
+std::map<std::string, uint32_t> parameters;
+PHASE phase;
+uint32_t component_name;
+uint32_t function_name;
+std::string param_name;
 
 Unreal::Unreal(sc_module_name) {
+    phase = COMPONENT;
 	tsock.register_b_transport(this, &Unreal::transport);
 }
 
 void clear_data() {
-    component_name = "";
-    function_name = "";
-    parameter_name = "";
-    parameter_value = "";
-
-    parameters.clear();
-
-    member_count = 0;
-    parameter = false;
+    // TODO
 }
 
 void curl(json body) {
@@ -87,49 +67,47 @@ void Unreal::transport(tlm::tlm_generic_payload &trans, sc_core::sc_time &delay)
 	auto *ptr = trans.get_data_ptr();
 	auto len = trans.get_data_length();
 
-    if (*ptr == '\n') {
-        if (parameter) {
-            parameters[parameter_name] = parameter_value;
-            parameter = false;
-        } else {
-            member_count++;
-        }
-    } else if (*ptr == '\0') {
+    uint32_t value = *reinterpret_cast<uint32_t *>(ptr);
 
-        json body = 
-        {
-            {"objectPath", game_path + "." + component_name},
-            {"functionName", function_name},
-            {"parameters", {}},
-            {"generateTransaction", true}
-        };
+    std::stringstream ss;
 
-        for (const auto& [key, value] : parameters) {
-            body["parameters"] = { { key, value } };
-        }
+    switch (phase) {
+        case COMPONENT:
+            component_name = value;
+            phase = FUNCTION;
+            break;
+        case FUNCTION:
+            function_name = value;
+            phase = PARAM_NAME;
+            break;
+        case PARAM_NAME:
+            ss << "0x" << std::setfill ('0') << std::setw(2) << std::hex << value;
+            param_name = ss.str();
+            phase = PARAM_VALUE;
+            break;
+        case PARAM_VALUE:
+            parameters[param_name] = value;
+            phase = EXECUTE;
+            break;
+        case EXECUTE:
+            json body = 
+            {
+                {"objectPath", game_path + "." + get_display_name(component_name)},
+                {"functionName", get_function_name(function_name)},
+                {"parameters", {}},
+                {"generateTransaction", true}
+            };
 
-        curl(body);
-        clear_data();
-    } else {
-        switch (member_count) {
-            case 0:
-                component_name += *ptr;
-                break;
-            case 1:
-                function_name += *ptr;
-                break;
-            default:
-                if (*ptr == ':') {
-                    parameter = true;
-                } else {
-                    if (!parameter) {
-                        parameter_name += *ptr;
-                    } else {
-                        parameter_value += *ptr;
-                    }
-                }
-                break;
-        }
+            for (const auto& [key, value] : parameters) {
+                body["parameters"] = { { key, value } };
+            }
+
+            curl(body);
+            std::cout << body.dump() << std::endl;
+            clear_data();
+
+            phase = COMPONENT;
+            break;
     }
     
 }

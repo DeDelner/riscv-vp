@@ -11,9 +11,9 @@ void activeWait(float factor = 0.5) {
 int main() {
 
     Unreal::execute(
-        "VP_API_2", 
-        "Say Text", 
-        {{"NewParam", "Hello"}}
+        UnrealComponent::VP_API_2, 
+        UnrealFunction::Print_Float, 
+        {{0x00, 0xaa}}
     );
 
 
