@@ -49,7 +49,6 @@ void clear_data() {
 void curl(json body) {
     CURL *curl;
     CURLcode res;
-    long http_code;
 
     curl = curl_easy_init();
     curl_global_init(CURL_GLOBAL_ALL);
@@ -60,7 +59,9 @@ void curl(json body) {
         headers = curl_slist_append(headers, "Content-Type: application/json");
         headers = curl_slist_append(headers, "charset: utf-8");
 
-        curl_easy_setopt(curl, CURLOPT_URL, "host.docker.internal:30010/remote/object/call");
+        std::string url = host + ":" + port + "/remote/object/call";
+
+        curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
         curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "PUT");
         curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
         curl_easy_setopt(curl, CURLOPT_POSTFIELDS, body.dump().c_str());
@@ -74,11 +75,6 @@ void curl(json body) {
         if (res != CURLE_OK) {
             std::cerr << "curl_easy_perform() failed: " << curl_easy_strerror(res) << std::endl;
         }
-
-        std::cout << "get http return code" << std::endl;
-        curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &http_code);
-        std::cout << "http code: " << http_code << std::endl;
-
 
         curl_easy_cleanup(curl);
         curl_global_cleanup();
@@ -109,18 +105,10 @@ void Unreal::transport(tlm::tlm_generic_payload &trans, sc_core::sc_time &delay)
         };
 
         for (const auto& [key, value] : parameters) {
-            try {
-                // If float...
-                body["parameters"] = { { key, std::stof(value) } };
-            } catch(const std::exception& e) {
-                // Anything else...
-                body["parameters"] = { { key, value } };
-            }
-            
+            body["parameters"] = { { key, value } };
         }
 
         curl(body);
-
         clear_data();
     } else {
         switch (member_count) {

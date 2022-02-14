@@ -12,11 +12,12 @@ int main() {
 
     Unreal::execute(
         "VP_API_2", 
-        "Set Intensity", 
-        {{"NewIntensity", "0.0"}}
+        "Say Text", 
+        {{"NewParam", "Hello"}}
     );
 
 
+/*
     int i = 0;
     while (i < 50) {
         i++;
@@ -27,7 +28,7 @@ int main() {
         );
         activeWait(0.005);
     }
-    
+    */
 
 	return 0;
 }
