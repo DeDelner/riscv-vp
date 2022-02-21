@@ -1,4 +1,5 @@
 #include <string>
+#include <iostream>
 #include "unreal.hpp"
 
 using namespace std;
@@ -10,25 +11,30 @@ void activeWait(float factor = 0.5) {
 
 int main() {
 
-    Unreal::execute(
-        UnrealComponent::VP_API_2, 
-        UnrealFunction::Print_Float, 
-        {{0x00, 0xaa}}
-    );
-
-
 /*
-    int i = 0;
-    while (i < 50) {
-        i++;
+    while (true) {
         Unreal::execute(
-            "VP_API_2", 
-            "Say Text", 
-            {{"NewParam", "i = " + std::to_string(i)}}
+            UnrealComponent::VP_API_2, 
+            UnrealFunction::Enable_Electromagnet, 
+            1
         );
-        activeWait(0.005);
+        activeWait(0.0075);
+        Unreal::execute(
+            UnrealComponent::VP_API_2, 
+            UnrealFunction::Enable_Electromagnet, 
+            0
+        );
+        activeWait(0.0075);
     }
     */
+
+    Unreal::execute(
+        UnrealComponent::VP_API_2, 
+        UnrealFunction::Enable_Electromagnet, 
+        1
+    );
+
+    std::cout << "Electromagnet enabled: " << Unreal::read_unreal_data() << std::endl;
 
 	return 0;
 }

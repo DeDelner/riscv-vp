@@ -9,8 +9,9 @@ using namespace std;
 
 namespace Unreal {
 
-    void send_unreal_data(uint32_t value);
+    void write_unreal_data(uint32_t value);
+    uint32_t read_unreal_data();
 
-    void execute(UnrealComponent component, UnrealFunction function, const map<uint32_t, uint32_t>& parameters);
+    void execute(UnrealComponent component, UnrealFunction function, uint32_t param_value);
 
 }

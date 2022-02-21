@@ -11,11 +11,11 @@
 using json = nlohmann::json;
 
 enum PHASE { COMPONENT, FUNCTION, PARAM_NAME, PARAM_VALUE, EXECUTE };
-std::map<std::string, uint32_t> parameters;
 PHASE phase;
 uint32_t component_name;
 uint32_t function_name;
-std::string param_name;
+uint32_t param_value;
+json response_body;
 
 Unreal::Unreal(sc_module_name) {
     phase = COMPONENT;
@@ -23,7 +23,15 @@ Unreal::Unreal(sc_module_name) {
 }
 
 void clear_data() {
-    // TODO
+    component_name = 0;
+    function_name = 0;
+    param_value = 0;
+    phase = COMPONENT;
+}
+
+size_t writeCallback(char *contents, size_t size, size_t nmemb, void *userp) {
+    ((std::string*)userp)->append((char*)contents, size * nmemb);
+    return size * nmemb;
 }
 
 void curl(json body) {
@@ -41,20 +49,26 @@ void curl(json body) {
 
         std::string url = host + ":" + port + "/remote/object/call";
 
+        std::string readBuffer;
+
         curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
         curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "PUT");
         curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
         curl_easy_setopt(curl, CURLOPT_POSTFIELDS, body.dump().c_str());
+        curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, writeCallback);
+        curl_easy_setopt(curl, CURLOPT_WRITEDATA, &readBuffer);
 
 
         //enable to spit out information for debugging
-        curl_easy_setopt(curl, CURLOPT_VERBOSE, 1L); 
+        //curl_easy_setopt(curl, CURLOPT_VERBOSE, 1L); 
 
         res = curl_easy_perform(curl);
 
         if (res != CURLE_OK) {
             std::cerr << "curl_easy_perform() failed: " << curl_easy_strerror(res) << std::endl;
         }
+
+        response_body = json::parse(readBuffer);
 
         curl_easy_cleanup(curl);
         curl_global_cleanup();
@@ -69,45 +83,35 @@ void Unreal::transport(tlm::tlm_generic_payload &trans, sc_core::sc_time &delay)
 
     uint32_t value = *reinterpret_cast<uint32_t *>(ptr);
 
-    std::stringstream ss;
+    if (cmd == tlm::TLM_WRITE_COMMAND) {
+        switch (phase) {
+            case COMPONENT:
+                component_name = value;
+                phase = FUNCTION;
+                break;
+            case FUNCTION:
+                function_name = value;
+                phase = PARAM_VALUE;
+                break;
+            case PARAM_VALUE:
+                param_value = value;
+            case EXECUTE:
+                json request_body = 
+                {
+                    {"objectPath", game_path + "." + get_display_name(component_name)},
+                    {"functionName", get_function_name(function_name)},
+                    {"parameters", {{ "0", param_value }}},
+                    {"generateTransaction", true}
+                };
 
-    switch (phase) {
-        case COMPONENT:
-            component_name = value;
-            phase = FUNCTION;
-            break;
-        case FUNCTION:
-            function_name = value;
-            phase = PARAM_NAME;
-            break;
-        case PARAM_NAME:
-            ss << "0x" << std::setfill ('0') << std::setw(2) << std::hex << value;
-            param_name = ss.str();
-            phase = PARAM_VALUE;
-            break;
-        case PARAM_VALUE:
-            parameters[param_name] = value;
-            phase = EXECUTE;
-            break;
-        case EXECUTE:
-            json body = 
-            {
-                {"objectPath", game_path + "." + get_display_name(component_name)},
-                {"functionName", get_function_name(function_name)},
-                {"parameters", {}},
-                {"generateTransaction", true}
-            };
-
-            for (const auto& [key, value] : parameters) {
-                body["parameters"] = { { key, value } };
-            }
-
-            curl(body);
-            std::cout << body.dump() << std::endl;
-            clear_data();
-
-            phase = COMPONENT;
-            break;
+                curl(request_body);
+                //std::cout << body.dump() << std::endl;
+                clear_data();
+                break;
+        }
+    } else {
+        std::cout << "read detected" << std::endl;
+        *((uint32_t *)ptr) = response_body["Return"];
     }
     
 }

@@ -1,7 +1,7 @@
 #pragma once
 
 enum UnrealComponent { VP_API_2 };
-enum UnrealFunction { Say_Text, Print_Float };
+enum UnrealFunction { Print_Float, Enable_Electromagnet };
 
 static const char* get_display_name(uint32_t index) {
     const char* unreal_display_name[1] = { "VP_2" };
@@ -9,6 +9,6 @@ static const char* get_display_name(uint32_t index) {
 }
 
 static const char* get_function_name(uint32_t index) {
-    const char* unreal_function_name[2] = { "Say Text", "Print Float" };
+    const char* unreal_function_name[2] = { "Print Float", "Enable Electromagnet" };
     return unreal_function_name[index];
 }
