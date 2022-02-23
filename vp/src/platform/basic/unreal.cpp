@@ -104,8 +104,8 @@ void Unreal::transport(tlm::tlm_generic_payload &trans, sc_core::sc_time &delay)
                     {"generateTransaction", true}
                 };
 
+                //std::cout << request_body.dump() << std::endl;
                 curl(request_body);
-                //std::cout << body.dump() << std::endl;
                 clear_data();
                 break;
         }

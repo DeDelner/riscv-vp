@@ -9,32 +9,40 @@ void activeWait(float factor = 0.5) {
 	};
 }
 
-int main() {
-
-/*
-    while (true) {
-        Unreal::execute(
-            UnrealComponent::VP_API_2, 
-            UnrealFunction::Enable_Electromagnet, 
-            1
-        );
-        activeWait(0.0075);
-        Unreal::execute(
-            UnrealComponent::VP_API_2, 
-            UnrealFunction::Enable_Electromagnet, 
-            0
-        );
-        activeWait(0.0075);
-    }
-    */
-
+void set_electromagnet_power(uint32_t power) {
     Unreal::execute(
         UnrealComponent::VP_API_2, 
-        UnrealFunction::Enable_Electromagnet, 
-        1
+        UnrealFunction::Set_Electromagnet_Power, 
+        power
     );
+} 
 
-    std::cout << "Electromagnet enabled: " << Unreal::read_unreal_data() << std::endl;
+uint32_t get_hallsensor_value() {
+    Unreal::execute(
+        UnrealComponent::VP_API_2, 
+        UnrealFunction::Get_HallSensor_Value, 
+        0
+    );
+    return Unreal::read_unreal_data();
+}
+
+int main() {
+
+    uint32_t threshold = 150;
+    uint32_t hallsensor_value = 0;
+
+    while (true) {
+        hallsensor_value = get_hallsensor_value();
+        std::cout << "hallsensor: " << hallsensor_value << std::endl;
+
+        if (hallsensor_value > threshold) {
+            set_electromagnet_power(0);
+        } else {
+            set_electromagnet_power(hallsensor_value);
+        }
+        
+        activeWait(0.01);
+    }
 
 	return 0;
 }
