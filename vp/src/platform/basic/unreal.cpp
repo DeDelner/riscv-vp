@@ -110,7 +110,6 @@ void Unreal::transport(tlm::tlm_generic_payload &trans, sc_core::sc_time &delay)
                 break;
         }
     } else {
-        std::cout << "read detected" << std::endl;
         *((uint32_t *)ptr) = response_body["Return"];
     }
     
