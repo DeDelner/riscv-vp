@@ -55,10 +55,6 @@ int main() {
     }
 */
 
-    // Try generally to get it of the ground
-    set_electromagnet_power(500);
-    wait(1000);
-
     uint32_t ground_level = 30;
 
     // Now try to keep it in air
@@ -66,18 +62,15 @@ int main() {
     while (true) {
         uint32_t hallsensor_value = get_hallsensor_value();
         
-        //std::cout << "hallsensor: " << hallsensor_value << std::endl;
 
-        //double level = max((hallsensor_value - ground_level) / (max_level - ground_level), 0.0);
-        
-
-        uint32_t wait_time = max(hallsensor_value - ground_level, (uint32_t)0) * 2;
+        uint32_t wait_time = clamp((hallsensor_value - 30) * 2, (uint32_t)0, (uint32_t)70);
+        std::cout << "wait_time: " << wait_time << std::endl;
 
             set_electromagnet_power(0);
             wait(wait_time);
             set_electromagnet_power(500);
 
-        //std::cout << "\033c"; // clear line
+        std::cout << "\033c"; // clear line
     }
 
 	return 0;
