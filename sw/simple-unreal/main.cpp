@@ -55,22 +55,34 @@ int main() {
     }
 */
 
-    uint32_t ground_level = 30;
+    const int32_t THRESHOLD = 50;
+    const int32_t ELEVATION_THRESHOLD = 55;
+
+    int32_t hallsensor_value = 0;
+    int32_t previous_hallsensor_value = 0;
+
+    int32_t velocity = 0;
 
     // Now try to keep it in air
     // It's important to turn it off after its initial levitation
     while (true) {
-        uint32_t hallsensor_value = get_hallsensor_value();
-        
+        velocity = hallsensor_value - previous_hallsensor_value;
+        previous_hallsensor_value = hallsensor_value;
 
-        uint32_t wait_time = clamp((hallsensor_value - 30) * 2, (uint32_t)0, (uint32_t)70);
-        std::cout << "wait_time: " << wait_time << std::endl;
+        int32_t wait_time = clamp((hallsensor_value - THRESHOLD) * 16, (int32_t)46 - velocity, (int32_t)1000);
 
-            set_electromagnet_power(0);
-            wait(wait_time);
+        int32_t height = max(hallsensor_value - 28, (int32_t)0);
+
             set_electromagnet_power(500);
+            wait(ELEVATION_THRESHOLD - height - velocity);
+            set_electromagnet_power(0);
+            //wait(max(velocity * 6, (int32_t)0));
 
+        std::cout << "height: " << height << std::endl;
         std::cout << "\033c"; // clear line
+
+
+        hallsensor_value = get_hallsensor_value();
     }
 
 	return 0;
