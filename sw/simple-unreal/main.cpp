@@ -35,26 +35,6 @@ float ieee_float(uint32_t f) {
 
 int main() {
 
-/*
-    while (true) {
-        hallsensor_value = get_hallsensor_value();
-        //std::cout << "hallsensor: " << hallsensor_value << std::endl;
-
-        if (hallsensor_value > 45) {
-            set_electromagnet_power(0);
-        } else {
-            set_electromagnet_power(500);
-        }
-
-        float wait = max(70.0 - hallsensor_value, 0.0) / (20000.0);
-        std::cout << "activeWait: " << wait << std::endl;
-
-        activeWait(wait);
-    
-        std::cout << "\033c"; // clear line
-    }
-*/
-
     const int32_t THRESHOLD = 50;
     const int32_t ELEVATION_THRESHOLD = 55;
 
@@ -63,8 +43,6 @@ int main() {
 
     int32_t velocity = 0;
 
-    // Now try to keep it in air
-    // It's important to turn it off after its initial levitation
     while (true) {
         velocity = hallsensor_value - previous_hallsensor_value;
         previous_hallsensor_value = hallsensor_value;
