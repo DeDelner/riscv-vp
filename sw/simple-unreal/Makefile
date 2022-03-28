@@ -1,5 +1,5 @@
-all : main.cpp unreal.cpp
-	riscv32-unknown-elf-g++ -std=c++20 main.cpp unreal.cpp -o main -march=rv32i -mabi=ilp32
+all : main.cpp unreal.cpp pid.cpp
+	riscv32-unknown-elf-g++ -std=c++20 main.cpp unreal.cpp pid.cpp -o main -march=rv32i -mabi=ilp32
 
 sim: all
 	riscv-vp --intercept-syscalls main
