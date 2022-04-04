@@ -29,36 +29,26 @@ uint32_t get_hallsensor_value() {
 
 int main() {
 
-    const int32_t THRESHOLD = 50;
-    const int32_t ELEVATION_THRESHOLD = 55;
-
-    int32_t hallsensor_value = 0;
-    int32_t previous_hallsensor_value = 0;
-
-    int32_t velocity = 0;
-
     // Kp -  proportional gain
     // Ki -  Integral gain
     // Kd -  derivative gain
     // dt -  loop interval time
     // max - maximum value of manipulated variable
     // min - minimum value of manipulated variable
-    double dt = 0.0000001;
-    double max = 100.0;
-    double min = -100.0;
-    double Kp = 0.5;
-    double Kd = 0.05;
-    double Ki = 0.0;
+    float dt = 0.01;
+    float max = 100.0;
+    float min = -100.0;
+    float Kp = 0.1;
+    float Kd = 0.01;
+    float Ki = 0.0;
     PID pid = PID(dt, max, min, Kp, Kd, Ki);
 
-    int setpoint = 30; // desired height, our target
+    int32_t setpoint = 50; // desired height, our target
 
-    int val = 0;
     while (true) {
-        int inc = (int)pid.calculate(setpoint, get_hallsensor_value());
-        std::cout << "val: " << val << ", inc: " << inc << std::endl;
+        int32_t inc = (int32_t)pid.calculate(setpoint, get_hallsensor_value());
+        std::cout << "inc: " << inc << std::endl;
         std::cout << "\033c"; // clear line
-        val += inc;
 
         if (inc > 0) {
             set_electromagnet_power(500);
