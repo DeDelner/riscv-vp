@@ -44,23 +44,23 @@ int main() {
     // max - maximum value of manipulated variable
     // min - minimum value of manipulated variable
     double dt = 0.0000001;
-    double max = 1.0;
-    double min = -1.0;
-    double Kp = 0.04;
-    double Kd = 1;
-    double Ki = 1;
+    double max = 100.0;
+    double min = -100.0;
+    double Kp = 0.5;
+    double Kd = 0.05;
+    double Ki = 0.0;
     PID pid = PID(dt, max, min, Kp, Kd, Ki);
 
-    int setpoint = 30;
+    int setpoint = 30; // desired height, our target
 
-    int val = get_hallsensor_value();
+    int val = 0;
     while (true) {
         int inc = (int)pid.calculate(setpoint, get_hallsensor_value());
         std::cout << "val: " << val << ", inc: " << inc << std::endl;
         std::cout << "\033c"; // clear line
-        val += inc * inc *inc;
+        val += inc;
 
-        if (val > 0) {
+        if (inc > 0) {
             set_electromagnet_power(500);
         } else {
             set_electromagnet_power(0);
